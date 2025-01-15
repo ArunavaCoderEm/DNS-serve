@@ -1,5 +1,5 @@
 {
-  "name": "./",
+  "name": "dnsserver",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
