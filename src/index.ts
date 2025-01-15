@@ -1,12 +1,4 @@
-import {
-    startUdpServer,
-    useCache,
-    useFallback,
-    useZone
-} from "denamed";
+import { startUdpServer, DnsQueryMessage } from "denamed";
 
+type QueryHandler = (query: DnsQueryMessage) => any;
 
-const queryHandler = (query: string) => {
-    console.log("Received query:", query);
-    return "Response to the query";
-};
