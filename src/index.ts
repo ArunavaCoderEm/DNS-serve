@@ -1,19 +1,14 @@
-import { startUdpServer, DnsQueryMessage, DnsResponseMessage } from "denamed";
+import { startUdpServer, createConsoleLog } from "denamed";
 
-// Define the QueryHandler type
-type QueryHandler = (query: DnsQueryMessage) => DnsResponseMessage;
+// Start the UDP server on port 9999
+startUdpServer((query: any): any => {
+  // Check if questions exists and is an array
+  if (query?.questions && Array.isArray(query.questions) && query.questions.length > 0) {
+    console.log(query.questions[0]?.name);  // Log the name if available
+  } else {
+    console.error("No valid questions array found in the query.");
+  }
+  return;
+}, { port: 9999, log: createConsoleLog() });
 
-startUdpServer((query): DnsResponseMessage => {
-    console.log("Received query:", query);
-
-    // Return a valid DNS response
-    return {
-        answers: [
-            {
-              name: "",
-              type: "A",  
-              data: "",
-            }
-        ]
-    };
-}, { port: 8000 });
+console.log("DNS server running on port 9999...");
