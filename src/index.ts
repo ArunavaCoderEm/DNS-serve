@@ -45,7 +45,7 @@ startUdpServer((query: any): any => {
     return null;
   }
 }, { 
-  port: 9999, 
+  port: 9090, 
   log: createConsoleLog() 
 });
 
