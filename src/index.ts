@@ -1,4 +1,5 @@
 const dgram = require('node:dgram');
+const dnsp = require('dns-packet');
 const server = dgram.createSocket('udp4');
 
 server.on('error', (err:any) => {
@@ -6,8 +7,9 @@ server.on('error', (err:any) => {
   server.close();
 });
 
-server.on('message', (msg: any) => {
-  console.log(`server got: ${msg}`);
+server.on('message', (msg: any, rinfo: any) => {
+  const actualMsg = dnsp.decode(msg);
+  console.log({message: `Server got: ${actualMsg?.questions[0]?.name}`, address: rinfo});
 });
 
 server.bind(9090, () => {

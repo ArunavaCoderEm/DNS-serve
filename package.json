@@ -16,6 +16,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "denamed": "^2.0.4"
+    "denamed": "^2.0.4",
+    "dns-packet": "^5.6.1"
   }
 }
