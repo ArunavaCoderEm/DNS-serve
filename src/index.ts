@@ -2,7 +2,7 @@ const dgram = require('node:dgram');
 const dnsp = require('dns-packet');
 const server = dgram.createSocket('udp4');
 
-server.on('error', (err:any) => {
+server.on('error', (err:any) => { 
   console.error(`server error:\n${err.stack}`);
   server.close();
 });
