@@ -49,4 +49,4 @@ startUdpServer((query: any): any => {
   log: createConsoleLog() 
 });
 
-console.log('DNS server running on port 9999.');
+console.log('DNS server running on port 9090.');
