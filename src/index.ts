@@ -1,17 +1,33 @@
 const dgram = require('node:dgram');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const dnsp = require('dns-packet');
 const server = dgram.createSocket('udp4');
+
+const API = process.env.GEMINI_API
+
+const genAI = new GoogleGenerativeAI(API);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+
 
 server.on('error', (err: any) => {
    console.error(`server error:\n${err.stack}`);
    server.close();
 });
 
-server.on('message', (msg: Buffer, rinfo: any) => {
+server.on('message', async (msg: Buffer, rinfo: any) => {
    try {
        const query = dnsp.decode(msg);
        console.log('Received query:', query);
+
+       const prompt = query?.questions[0]?.name;
        
+       const newPrompt = prompt.split("_").join(" ");
+
+       const resultres = await model.generateContent(`You are an expert of everything like a chatbot now answer in max 20 words to the question ${newPrompt}`);
+       
+      const result = resultres.response.text();
+
        const txtResponse = {
            type: 'response',
            id: query.id,
@@ -22,7 +38,7 @@ server.on('message', (msg: Buffer, rinfo: any) => {
                class: 'IN',
                name: query.questions[0].name,
                ttl: 300,
-               data: ['Hello! This is my custom message!']  
+               data: [result]  
            }],
            authorities: [],
            additionals: []
