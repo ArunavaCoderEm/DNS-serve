@@ -12,24 +12,23 @@ server.on('message', (msg: Buffer, rinfo: any) => {
        const query = dnsp.decode(msg);
        console.log('Received query:', query);
        
-       const response = {
+       const txtResponse = {
            type: 'response',
            id: query.id,
            flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
            questions: query.questions,
            answers: [{
-               type: 'A',
+               type: 'TXT',
                class: 'IN',
                name: query.questions[0].name,
                ttl: 300,
-               data: '192.168.1.1'  
+               data: ['Hello! This is my custom message!']  
            }],
            authorities: [],
            additionals: []
        };
        
-       console.log('Sending response:', response);
-       const responseBuffer = dnsp.encode(response);
+       const responseBuffer = dnsp.encode(txtResponse);  
        
        server.send(responseBuffer, rinfo.port, rinfo.address, (err: any) => {
            if (err) {
@@ -50,10 +49,6 @@ server.on('listening', () => {
 
 server.on('close', () => {
    console.log('DNS server closed');
-});
-
-process.on('uncaughtException', (err) => {
-   console.error('Uncaught Exception:', err);
 });
 
 server.bind(9090);
