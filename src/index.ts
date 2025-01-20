@@ -7,13 +7,13 @@ server.on('error', (err: any) => {
    server.close();
 });
 
-server.on('message', (msg: any, rinfo: any) => {
+server.on('message', (msg: Buffer, rinfo: any) => {
    try {
        const query = dnsp.decode(msg);
        console.log('Received query:', query);
-
+       
        const response = {
-           type: 'response', 
+           type: 'response',
            id: query.id,
            flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
            questions: query.questions,
@@ -22,16 +22,15 @@ server.on('message', (msg: any, rinfo: any) => {
                class: 'IN',
                name: query.questions[0].name,
                ttl: 300,
-               data: 'hey there'
+               data: '192.168.1.1'  
            }],
            authorities: [],
            additionals: []
        };
-
+       
        console.log('Sending response:', response);
-
        const responseBuffer = dnsp.encode(response);
-
+       
        server.send(responseBuffer, rinfo.port, rinfo.address, (err: any) => {
            if (err) {
                console.error('Failed to send response:', err);
