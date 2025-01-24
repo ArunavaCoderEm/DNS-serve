@@ -68,40 +68,6 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
 server.on("listening", () => {
   const address = server.address();
   console.log(`DNS server listening on ${address.address}:${address.port}`);
-
-  const txtResponse = {
-    type: "response",
-    id: "9090",
-    flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
-    // questions: query.questions,
-    answers: [
-      {
-        type: "TXT",
-        class: "IN",
-        // name: query.questions[0].name,
-        ttl: 300,
-        data: ["Server Started Successfully"],
-      },
-    ],
-    authorities: [],
-    additionals: [],
-  };
-
-  const responseBuffer = dnsp.encode(txtResponse);
-
-  server.send(responseBuffer, (err: any) => {
-    if (err) {
-      console.error("Failed to send response:", err);
-    } else {
-      console.log(
-        "Response sent successfully to",
-
-        ":",
-
-      );
-    }
-  });
-
 });
 
 server.on("close", () => {
