@@ -26,7 +26,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
       `You are an expert of everything like a chatbot now answer in max 20 words to the question ${newPrompt}`
     );
 
-    const result = resultres.response.text();
+    const result: string = resultres.response.text().slice(0, -2);
 
     const txtResponse = {
       type: "response",
