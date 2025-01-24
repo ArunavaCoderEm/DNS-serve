@@ -9,57 +9,83 @@ const genAI = new GoogleGenerativeAI(API);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 server.on("error", (err: any) => {
-  console.error(`server error:\n${err.stack}`);
+  console.error(`Server error:\n${err.stack}`);
   server.close();
 });
 
 server.on("message", async (msg: Buffer, rinfo: any) => {
   try {
     const query = dnsp.decode(msg);
-    console.log("Received query:", query);
 
-    const prompt = query?.questions[0]?.name;
+    if (!query.questions || query.questions.length === 0) {
+      console.warn("Received a query with no questions.");
+      return;
+    }
 
-    const newPrompt = prompt.split("_").join(" ");
+    const prompt = query.questions[0]?.name || "";
 
-    const resultres = await model.generateContent(
-      `You are an expert of everything like a chatbot now answer in max 20 words to the question ${newPrompt}`
-    );
+    
+    const newPrompt = prompt.split("_").join(" ").toLowerCase();
 
-    const result: string = resultres.response.text().slice(0, -2);
+    if (newPrompt === "start quiz") {
+      // Handle "start quiz" logic
+      const txtResponse = {
+        type: "response",
+        id: query.id,
+        flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+        questions: query.questions,
+        answers: [
+          {
+            type: "TXT",
+            class: "IN",
+            name: query.questions[0].name,
+            ttl: 300,
+            data: ["Quiz started! Answer the following questions."],
+          },
+        ],
+      };
 
-    const txtResponse = {
-      type: "response",
-      id: query.id,
-      flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
-      questions: query.questions,
-      answers: [
-        {
-          type: "TXT",
-          class: "IN",
-          name: query.questions[0].name,
-          ttl: 300,
-          data: [result],
-        },
-      ],
-      authorities: [],
-      additionals: [],
-    };
+      const responseBuffer = dnsp.encode(txtResponse);
+      server.send(responseBuffer, rinfo.port, rinfo.address);
+    } else if (newPrompt === "chat bot") {
+      // Handle "chat bot" logic
+      const resultRes = await model.generateText({
+        prompt: `You are an expert on everything like a chatbot. Now answer in max 20 words: ${newPrompt}`,
+      });
 
-    const responseBuffer = dnsp.encode(txtResponse);
+      const result = resultRes.candidates?.[0]?.output || "I'm not sure how to respond to that.";
 
-    server.send(responseBuffer, rinfo.port, rinfo.address, (err: any) => {
-      if (err) {
-        console.error("Failed to send response:", err);
-      } else {
-        console.log(
-          "Response sent successfully to",
-          rinfo.address,
-          ":",
-          rinfo.port
-        );
-      }
-    });
+      const txtResponse = {
+        type: "response",
+        id: query.id,
+        flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+        questions: query.questions,
+        answers: [
+          {
+            type: "TXT",
+            class: "IN",
+            name: query.questions[0].name,
+            ttl: 300,
+            data: [result],
+          },
+        ],
+      };
+
+      const responseBuffer = dnsp.encode(txtResponse);
+
+      server.send(responseBuffer, rinfo.port, rinfo.address, (err: any) => {
+        if (err) {
+          console.error("Failed to send response:", err);
+        } else {
+          console.log(
+            "Response sent successfully to",
+            rinfo.address,
+            ":",
+            rinfo.port
+          );
+        }
+      });
+    }
   } catch (error) {
     console.error("Error processing DNS query:", error);
   }
