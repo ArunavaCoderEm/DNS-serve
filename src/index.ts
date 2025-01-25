@@ -23,10 +23,9 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
     }
 
     const prompt = query.questions[0]?.name || "";
-
     
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
-
+    console.log(newPrompt);
     if (newPrompt === "start quiz") {
 
       const txtResponse = {
