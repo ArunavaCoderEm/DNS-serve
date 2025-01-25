@@ -28,7 +28,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
 
     if (newPrompt === "start quiz") {
-      // Handle "start quiz" logic
+
       const txtResponse = {
         type: "response",
         id: query.id,
@@ -48,7 +48,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
       const responseBuffer = dnsp.encode(txtResponse);
       server.send(responseBuffer, rinfo.port, rinfo.address);
     } else if (newPrompt === "chat bot") {
-      // Handle "chat bot" logic
+ 
       const resultRes = await model.generateText({
         prompt: `You are an expert on everything like a chatbot. Now answer in max 20 words: ${newPrompt}`,
       });
