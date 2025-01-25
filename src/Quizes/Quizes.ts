@@ -11,4 +11,14 @@ export const quiz: QuizType = {
     options: ["Newton", "Einstein", "Tesla", "Bohr"],
     answer: "B",
   },
+  Q3: {
+    question: "Who developed the theory of relativity?",
+    options: ["Newton", "Einstein", "Tesla", "Bohr"],
+    answer: "B",
+  },
+  Q4: {
+    question: "Who developed the theory of relativity?",
+    options: ["Newton", "Einstein", "Tesla", "Bohr"],
+    answer: "B",
+  },
 };
