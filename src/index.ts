@@ -1,3 +1,5 @@
+import { quiz } from "./Quizes/Quizes";
+
 const dgram = require("node:dgram");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const dnsp = require("dns-packet");
@@ -23,11 +25,21 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
     }
 
     const prompt = query.questions[0]?.name || "";
+
     
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
     console.log(newPrompt);
     if (newPrompt === "start quiz") {
-
+      
+      let sessions: Record<string, { questionIndex: number; correct: number; total: number }> 
+      const sessionKey = `${rinfo.address}:${rinfo.port}`;
+      if (!sessions[sessionKey]) {
+        sessions[sessionKey] = {
+          questionIndex: 0,
+          correct: 0,
+          total: Object.keys(quiz).length,
+        };
+      }
       const txtResponse = {
         type: "response",
         id: query.id,
@@ -46,6 +58,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
 
       const responseBuffer = dnsp.encode(txtResponse);
       server.send(responseBuffer, rinfo.port, rinfo.address);
+
     } else if (newPrompt === "chat bot") {
  
       const resultRes = await model.generateText({
