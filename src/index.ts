@@ -26,12 +26,13 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
 
     const prompt = query.questions[0]?.name || "";
 
-    
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
     console.log(newPrompt);
     if (newPrompt === "start quiz") {
-      
-      const sessions: Record<string, { questionIndex: number; correct: number; total: number }> = {}
+      const sessions: Record<
+        string,
+        { questionIndex: number; correct: number; total: number }
+      > = {};
       const sessionKey = `${rinfo.address}:${rinfo.port}`;
       if (!sessions[sessionKey]) {
         sessions[sessionKey] = {
@@ -40,32 +41,65 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
           total: Object.keys(quiz).length,
         };
       }
-      const txtResponse = {
-        type: "response",
-        id: query.id,
-        flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
-        questions: query.questions,
-        answers: [
-          {
-            type: "TXT",
-            class: "IN",
-            name: query.questions[0].name,
-            ttl: 300,
-            data: ["Quiz started! Answer the following questions."],
-          },
-        ],
-      };
+      const session = sessions[sessionKey];
+      const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
+      const currentQuestion = quiz[currentQuestionKey];
 
-      const responseBuffer = dnsp.encode(txtResponse);
-      server.send(responseBuffer, rinfo.port, rinfo.address);
+      if (currentQuestion) {
+        const txtResponse = {
+          type: "response",
+          id: query.id,
+          flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+          questions: query.questions,
+          answers: [
+            {
+              type: "TXT",
+              class: "IN",
+              name: query.questions[0].name,
+              ttl: 300,
+              data: [
+                `Q${session.questionIndex + 1}: ${currentQuestion.question}`,
+                ...currentQuestion.options,
+                "Reply with the option number (e.g., 1, 2, 3, or 4).",
+              ],
+            },
+          ],
+        };
 
+        const responseBuffer = dnsp.encode(txtResponse);
+        server.send(responseBuffer, rinfo.port, rinfo.address);
+      } else {
+        const txtResponse = {
+          type: "response",
+          id: query.id,
+          flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+          questions: query.questions,
+          answers: [
+            {
+              type: "TXT",
+              class: "IN",
+              name: query.questions[0].name,
+              ttl: 300,
+              data: [
+                `Quiz completed! You got ${session.correct} out of ${session.total} questions correct.`,
+              ],
+            },
+          ],
+        };
+
+        const responseBuffer = dnsp.encode(txtResponse);
+        server.send(responseBuffer, rinfo.port, rinfo.address);
+
+        delete sessions[sessionKey];
+      }
     } else if (newPrompt === "chat bot") {
- 
       const resultRes = await model.generateText({
         prompt: `You are an expert on everything like a chatbot. Now answer in max 20 words: ${newPrompt}`,
       });
 
-      const result = resultRes.candidates?.[0]?.output || "I'm not sure how to respond to that.";
+      const result =
+        resultRes.candidates?.[0]?.output ||
+        "I'm not sure how to respond to that.";
 
       const txtResponse = {
         type: "response",
