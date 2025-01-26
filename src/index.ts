@@ -1,3 +1,154 @@
+// import { quiz } from "./Quizes/Quizes";
+
+// const dgram = require("node:dgram");
+// const { GoogleGenerativeAI } = require("@google/generative-ai");
+// const dnsp = require("dns-packet");
+// const server = dgram.createSocket("udp4");
+
+// const API = process.env.GEMINI_API;
+
+// const genAI = new GoogleGenerativeAI(API);
+// const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+// server.on("error", (err: any) => {
+//   console.error(`Server error:\n${err.stack}`);
+//   server.close();
+// });
+
+// server.on("message", async (msg: Buffer, rinfo: any) => {
+//   try {
+//     const query = dnsp.decode(msg);
+
+//     if (!query.questions || query.questions.length === 0) {
+//       console.warn("Received a query with no questions.");
+//       return;
+//     }
+
+//     const prompt = query.questions[0]?.name || "";
+
+//     const newPrompt = prompt.split("_").join(" ").toLowerCase();
+//     console.log(newPrompt);
+//     if (newPrompt === "start quiz") {
+//       const sessions: Record<
+//         string,
+//         { questionIndex: number; correct: number; total: number }
+//       > = {};
+//       const sessionKey = `${rinfo.address}:${rinfo.port}`;
+//       if (!sessions[sessionKey]) {
+//         sessions[sessionKey] = {
+//           questionIndex: 0,
+//           correct: 0,
+//           total: Object.keys(quiz).length,
+//         };
+//       }
+//       const session = sessions[sessionKey];
+//       const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
+//       const currentQuestion = quiz[currentQuestionKey];
+
+//       if (currentQuestion) {
+//         const txtResponse = {
+//           type: "response",
+//           id: query.id,
+//           flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+//           questions: query.questions,
+//           answers: [
+//             {
+//               type: "TXT",
+//               class: "IN",
+//               name: query.questions[0].name,
+//               ttl: 300,
+//               data: [
+//                 `Q${session.questionIndex + 1}: ${currentQuestion.question}`,
+//                 ...currentQuestion.options,
+//                 "Reply with the option number (e.g., 1, 2, 3, or 4).",
+//               ],
+//             },
+//           ],
+//         };
+
+//         const responseBuffer = dnsp.encode(txtResponse);
+//         server.send(responseBuffer, rinfo.port, rinfo.address);
+//       } else {
+//         const txtResponse = {
+//           type: "response",
+//           id: query.id,
+//           flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+//           questions: query.questions,
+//           answers: [
+//             {
+//               type: "TXT",
+//               class: "IN",
+//               name: query.questions[0].name,
+//               ttl: 300,
+//               data: [
+//                 `Quiz completed! You got ${session.correct} out of ${session.total} questions correct.`,
+//               ],
+//             },
+//           ],
+//         };
+
+//         const responseBuffer = dnsp.encode(txtResponse);
+//         server.send(responseBuffer, rinfo.port, rinfo.address);
+
+//         delete sessions[sessionKey];
+//       }
+//     } else if (newPrompt === "chat bot") {
+//       const resultRes = await model.generateText({
+//         prompt: `You are an expert on everything like a chatbot. Now answer in max 20 words: ${newPrompt}`,
+//       });
+
+//       const result =
+//         resultRes.candidates?.[0]?.output ||
+//         "I'm not sure how to respond to that.";
+
+//       const txtResponse = {
+//         type: "response",
+//         id: query.id,
+//         flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+//         questions: query.questions,
+//         answers: [
+//           {
+//             type: "TXT",
+//             class: "IN",
+//             name: query.questions[0].name,
+//             ttl: 300,
+//             data: [result],
+//           },
+//         ],
+//       };
+
+//       const responseBuffer = dnsp.encode(txtResponse);
+
+//       server.send(responseBuffer, rinfo.port, rinfo.address, (err: any) => {
+//         if (err) {
+//           console.error("Failed to send response:", err);
+//         } else {
+//           console.log(
+//             "Response sent successfully to",
+//             rinfo.address,
+//             ":",
+//             rinfo.port
+//           );
+//         }
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error processing DNS query:", error);
+//   }
+// });
+
+// server.on("listening", () => {
+//   const address = server.address();
+//   console.log(`DNS server listening on ${address.address}:${address.port}`);
+// });
+
+// server.on("close", () => {
+//   console.log("DNS server closed");
+// });
+
+// server.bind(9090);
+
+
 import { quiz } from "./Quizes/Quizes";
 
 const dgram = require("node:dgram");
@@ -9,6 +160,12 @@ const API = process.env.GEMINI_API;
 
 const genAI = new GoogleGenerativeAI(API);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+// Persistent session state
+const sessions: Record<
+  string,
+  { questionIndex: number; correct: number; total: number }
+> = {};
 
 server.on("error", (err: any) => {
   console.error(`Server error:\n${err.stack}`);
@@ -28,11 +185,8 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
 
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
     console.log(newPrompt);
+
     if (newPrompt === "start quiz") {
-      const sessions: Record<
-        string,
-        { questionIndex: number; correct: number; total: number }
-      > = {};
       const sessionKey = `${rinfo.address}:${rinfo.port}`;
       if (!sessions[sessionKey]) {
         sessions[sessionKey] = {
@@ -41,6 +195,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
           total: Object.keys(quiz).length,
         };
       }
+
       const session = sessions[sessionKey];
       const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
       const currentQuestion = quiz[currentQuestionKey];
