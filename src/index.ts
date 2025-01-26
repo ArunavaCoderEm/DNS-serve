@@ -31,7 +31,7 @@ server.on("message", async (msg: Buffer, rinfo: any) => {
     console.log(newPrompt);
     if (newPrompt === "start quiz") {
       
-      let sessions: Record<string, { questionIndex: number; correct: number; total: number }> 
+      const sessions: Record<string, { questionIndex: number; correct: number; total: number }> = {}
       const sessionKey = `${rinfo.address}:${rinfo.port}`;
       if (!sessions[sessionKey]) {
         sessions[sessionKey] = {
