@@ -1,4 +1,11 @@
-# PROJECT
+# DNS-serve
+
+## DNS-serve is a command line tool for various tasks like AI chat bot, quiz system and many more
+
+### Commands 
+```
+Commands :- dig +short TXT @localhost -p 9090 Your_query_here_in_this_format
+```
 
 To install dependencies:
 
