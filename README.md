@@ -7,6 +7,12 @@
 Commands :- dig +short TXT @localhost -p 9090 Your_query_here_in_this_format
 ```
 
+### To Initialize
+```
+Commands :- dig +short TXT @localhost -p 9090 start_quiz
+Commands :- dig +short TXT @localhost -p 9090 chat_bot
+```
+
 To install dependencies:
 
 ```bash
@@ -16,7 +22,7 @@ bun install
 To run:
 
 ```bash
-bun run index.ts
+bun run dev
 ```
 
 This project was created using `bun init` in bun v1.1.36. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
