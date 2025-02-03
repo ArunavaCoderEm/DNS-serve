@@ -29,16 +29,19 @@ server.on("message", async (msg, rinfo) => {
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
     const sessionKey = `${rinfo.address}:${rinfo.port}`;
 
-    console.log("Received prompt:", newPrompt);  
+    console.log("Received prompt:", newPrompt);
+
 
     if (newPrompt === "start quiz") {
       if (!sessions[sessionKey]) {
+        console.log("Initializing session for:", sessionKey);
         sessions[sessionKey] = {
           questionIndex: 0,
           correct: 0,
           total: Object.keys(quiz).length,
         };
       }
+
       const session = sessions[sessionKey];
       const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
       const currentQuestion = quiz[currentQuestionKey];
@@ -67,22 +70,28 @@ server.on("message", async (msg, rinfo) => {
       };
 
       const responseBuffer = dnsp.encode(txtResponse);
-      console.log("Sending response:", txtResponse);  
+      console.log("Sending question:", currentQuestion.question);  
       server.send(responseBuffer, rinfo.port, rinfo.address);
-    } else if (["a", "b", "c", "d"].includes(newPrompt.toLowerCase())) {
-      console.log("Here");
-      if (!sessions[sessionKey]) return;
-      console.log("Here3");
+    } 
+
+    else if (["a", "b", "c", "d"].includes(newPrompt.toLowerCase())) {
+      console.log("Received answer:", newPrompt.toLowerCase()); 
+
+      if (!sessions[sessionKey]) {
+        console.log("No session found for key:", sessionKey);  
+        return;
+      }
 
       const session = sessions[sessionKey];
       const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
       const currentQuestion = quiz[currentQuestionKey];
       const correctAnswer = currentQuestion.answer.toLowerCase();
 
-      console.log(`Received answer: ${newPrompt.toLowerCase()}`); 
-
       if (newPrompt.toLowerCase() === correctAnswer) {
+        console.log("Correct answer chosen!");  
         session.correct++;
+      } else {
+        console.log("Incorrect answer chosen.");  
       }
 
       session.questionIndex++;
@@ -115,7 +124,7 @@ server.on("message", async (msg, rinfo) => {
         };
 
         const responseBuffer = dnsp.encode(txtResponse);
-        console.log("Sending response:", txtResponse);  
+        console.log("Sending next question:", nextQuestion.question);  
         server.send(responseBuffer, rinfo.port, rinfo.address);
       } else {
         const txtResponse: dnsp.Packet = {
@@ -138,7 +147,8 @@ server.on("message", async (msg, rinfo) => {
         const responseBuffer = dnsp.encode(txtResponse);
         console.log("Sending final response:", txtResponse);  
         server.send(responseBuffer, rinfo.port, rinfo.address);
-        delete sessions[sessionKey];
+        delete sessions[sessionKey];  
+        console.log("Session deleted for key:", sessionKey);  
       }
     }
   } catch (error) {
