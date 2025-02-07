@@ -8,6 +8,8 @@ const API = process.env.GEMINI_API;
 const genAI = new GoogleGenerativeAI(API || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+const TOTAL_QUIZ: number = 5;
+
 const sessions: Record<
   string,
   { questionIndex: number; correct: number; total: number }
