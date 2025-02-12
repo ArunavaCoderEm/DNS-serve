@@ -20,25 +20,5 @@ export const quiz: QuizType = {
     question: "Who wrote 'Hamlet'?",
     options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
     answer: "B",
-  },
-  Q5: {
-    question: "What is the largest mammal in the world?",
-    options: ["Elephant", "Blue Whale", "Giraffe", "Hippopotamus"],
-    answer: "B",
-  },
-  Q6: {
-    question: "How many continents are there on Earth?",
-    options: ["5", "6", "7", "8"],
-    answer: "C",
-  },
-  Q7: {
-    question: "What is the currency of the United Kingdom?",
-    options: ["Euro", "Pound Sterling", "Dollar", "Yen"],
-    answer: "B",
-  },
-  Q8: {
-    question: "What is the hardest natural substance on Earth?",
-    options: ["Gold", "Iron", "Diamond", "Quartz"],
-    answer: "C",
-  },
+  }
 };
