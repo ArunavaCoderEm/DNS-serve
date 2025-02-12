@@ -1,7 +1,7 @@
 import * as dgram from "node:dgram";
 import * as dnsp from "dns-packet";
 import { quiz } from "./Quizes/Quizes";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GenerateContentResult, GoogleGenerativeAI } from "@google/generative-ai";
 
 const server = dgram.createSocket("udp4");
 const API = process.env.GEMINI_API;
@@ -152,6 +152,28 @@ server.on("message", async (msg, rinfo) => {
         delete sessions[sessionKey];  
         console.log("Session deleted for key:", sessionKey);  
       }
+    }
+
+    else if (newPrompt == "chat bot") {
+      const result: string | GenerateContentResult = await model.generateContent(prompt);
+      const txtResponse: dnsp.Packet = {
+        type: "response",
+        id: query.id,
+        flags: dnsp.RECURSION_DESIRED | dnsp.RECURSION_AVAILABLE,
+        questions: query.questions,
+        answers: [
+          {
+            type: "TXT",
+            class: "IN",
+            name: query.questions[0].name,
+            ttl: 300,
+            data: [result.response.text()]
+          },
+        ],
+      };
+
+      const responseBuffer = dnsp.encode(txtResponse);  
+      server.send(responseBuffer, rinfo.port, rinfo.address);
     }
   } catch (error) {
     console.error("Error processing DNS query:", error);
