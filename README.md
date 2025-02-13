@@ -25,6 +25,6 @@ To run:
 bun run dev
 ```
 
-This is the project that will help the Gemini model to run in your terminal with help of a custom build DNS server with help of DIG command and with a port number directed to 9090. 
+This is the project that will help the Gemini model to run in your terminal with help of a custom build DNS server with help of DIG command and with a port number directed to 9090. Also there is a quiz app in built with that along with AI model that will ask you questoins and will score you according to the answers you give.
 
 This project was created using `bun init` in bun v1.1.36. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
