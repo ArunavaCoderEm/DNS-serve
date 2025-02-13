@@ -25,4 +25,6 @@ To run:
 bun run dev
 ```
 
+This is the project that will help the Gemini model to run in your terminal with 
+
 This project was created using `bun init` in bun v1.1.36. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
