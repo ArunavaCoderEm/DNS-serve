@@ -13,6 +13,10 @@ Commands :- dig +short TXT @localhost -p 9090 start_quiz
 Commands :- dig +short TXT @localhost -p 9090 chat_bot
 ```
 
+### Running environment
+
+``` bun ```
+
 To install dependencies:
 
 ```bash
