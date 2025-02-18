@@ -3,6 +3,7 @@ import * as dnsp from "dns-packet";
 import { quiz } from "./Quizes/Quizes";
 import { GenerateContentResult, GoogleGenerativeAI } from "@google/generative-ai";
 
+// Create UDP socket
 const server = dgram.createSocket("udp4");
 const API = process.env.GEMINI_API;
 const genAI = new GoogleGenerativeAI(API || "");
@@ -22,8 +23,10 @@ server.on("error", (err) => {
 
 server.on("message", async (msg, rinfo) => {
   try {
+    console.log("Received raw query buffer:", msg);
+
     const query = dnsp.decode(msg) as dnsp.Packet;
-    console.log("Received query:", query); 
+    console.log("Decoded query:", JSON.stringify(query, null, 2));
 
     if (!query.questions || query.questions.length === 0) return;
 
@@ -31,12 +34,11 @@ server.on("message", async (msg, rinfo) => {
     const newPrompt = prompt.split("_").join(" ").toLowerCase();
     const sessionKey = `${rinfo.address}:${rinfo.port}`;
 
-    console.log("Received prompt:", newPrompt);
-
+    console.log("Processed prompt:", newPrompt);
 
     if (newPrompt === "start quiz") {
       if (!sessions[sessionKey]) {
-        console.log("Initializing session for:", sessionKey);
+        console.log(`Initializing session for ${sessionKey}`);
         sessions[sessionKey] = {
           questionIndex: 0,
           correct: 0,
@@ -47,6 +49,8 @@ server.on("message", async (msg, rinfo) => {
       const session = sessions[sessionKey];
       const currentQuestionKey = Object.keys(quiz)[session.questionIndex];
       const currentQuestion = quiz[currentQuestionKey];
+
+      console.log(`Sending question ${session.questionIndex + 1}: ${currentQuestion.question}`);
 
       const txtResponse: dnsp.Packet = {
         type: "response",
@@ -71,16 +75,17 @@ server.on("message", async (msg, rinfo) => {
         ],
       };
 
+      console.log("DNS Response:", JSON.stringify(txtResponse, null, 2));
+
       const responseBuffer = dnsp.encode(txtResponse);
-      console.log("Sending question:", currentQuestion.question);  
       server.send(responseBuffer, rinfo.port, rinfo.address);
     } 
 
     else if (["a", "b", "c", "d"].includes(newPrompt.toLowerCase())) {
-      console.log("Received answer:", newPrompt.toLowerCase()); 
+      console.log(`Received answer: ${newPrompt.toUpperCase()}`);
 
       if (!sessions[sessionKey]) {
-        console.log("No session found for key:", sessionKey);  
+        console.log(`No session found for ${sessionKey}, ignoring response.`);
         return;
       }
 
@@ -90,10 +95,10 @@ server.on("message", async (msg, rinfo) => {
       const correctAnswer = currentQuestion.answer.toLowerCase();
 
       if (newPrompt.toLowerCase() === correctAnswer) {
-        console.log("Correct answer chosen!");  
+        console.log("✅ Correct answer!");
         session.correct++;
       } else {
-        console.log("Incorrect answer chosen.");  
+        console.log("❌ Incorrect answer.");
       }
 
       session.questionIndex++;
@@ -101,6 +106,8 @@ server.on("message", async (msg, rinfo) => {
       if (session.questionIndex < session.total) {
         const nextQuestionKey = Object.keys(quiz)[session.questionIndex];
         const nextQuestion = quiz[nextQuestionKey];
+
+        console.log(`Next question ${session.questionIndex + 1}: ${nextQuestion.question}`);
 
         const txtResponse: dnsp.Packet = {
           type: "response",
@@ -125,10 +132,13 @@ server.on("message", async (msg, rinfo) => {
           ],
         };
 
+        console.log("DNS Response:", JSON.stringify(txtResponse, null, 2));
+
         const responseBuffer = dnsp.encode(txtResponse);
-        console.log("Sending next question:", nextQuestion.question);  
         server.send(responseBuffer, rinfo.port, rinfo.address);
       } else {
+        console.log(`Quiz completed for ${sessionKey}. Score: ${session.correct}/${session.total}`);
+
         const txtResponse: dnsp.Packet = {
           type: "response",
           id: query.id,
@@ -141,21 +151,27 @@ server.on("message", async (msg, rinfo) => {
               name: query.questions[0].name,
               ttl: 300,
               data: [
-                `Quiz completed! You got ${session.correct} out of ${session.total} correct.`,
+                `🎉 Quiz completed! You got ${session.correct} out of ${session.total} correct. 🎉`,
               ],
             },
           ],
         };
+
         const responseBuffer = dnsp.encode(txtResponse);
-        console.log("Sending final response:", txtResponse);  
         server.send(responseBuffer, rinfo.port, rinfo.address);
-        delete sessions[sessionKey];  
-        console.log("Session deleted for key:", sessionKey);  
+
+        delete sessions[sessionKey];
+        console.log(`Session deleted for ${sessionKey}`);
       }
-    }
+    } 
 
     else if (newPrompt == "chat bot") {
-      const result: string | GenerateContentResult = await model.generateContent(prompt);
+      console.log("Generating AI response...");
+      const result: GenerateContentResult = await model.generateContent(prompt);
+      const aiResponse = result.response.text();
+
+      console.log("AI Response:", aiResponse);
+
       const txtResponse: dnsp.Packet = {
         type: "response",
         id: query.id,
@@ -167,12 +183,12 @@ server.on("message", async (msg, rinfo) => {
             class: "IN",
             name: query.questions[0].name,
             ttl: 300,
-            data: [result.response.text()]
+            data: [aiResponse],
           },
         ],
       };
 
-      const responseBuffer = dnsp.encode(txtResponse);  
+      const responseBuffer = dnsp.encode(txtResponse);
       server.send(responseBuffer, rinfo.port, rinfo.address);
     }
   } catch (error) {
@@ -180,9 +196,10 @@ server.on("message", async (msg, rinfo) => {
   }
 });
 
+
 server.on("listening", () => {
   const address = server.address();
-  console.log(`DNS server listening on ${address.address}:${address.port}`);
+  console.log(`✅ DNS server listening on ${address.address}:${address.port}`);
 });
 
 server.bind(9090);
