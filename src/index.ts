@@ -3,7 +3,6 @@ import * as dnsp from "dns-packet";
 import { quiz } from "./Quizes/Quizes";
 import { GenerateContentResult, GoogleGenerativeAI } from "@google/generative-ai";
 
-// Create UDP socket
 const server = dgram.createSocket("udp4");
 const API = process.env.GEMINI_API;
 const genAI = new GoogleGenerativeAI(API || "");
